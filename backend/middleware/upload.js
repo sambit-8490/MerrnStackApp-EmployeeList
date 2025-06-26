@@ -1,16 +1,24 @@
 const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
-// Set up multer to store the image in memory as a buffer
+// Ensure the uploads directory exists
+const uploadDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Set up multer storage
 const storage = multer.diskStorage({
-    destination: function(req, file, cb) {
-        cb(null, "../src/assets/");
-    },
-    filename: function(req, file, cb){
-        const uniqueSuffix = Date.now();
-        cb(null, uniqueSuffix + file.originalname);
-    },
+  destination: function (req, file, cb) {
+    cb(null, uploadDir); // uploads/
+  },
+  filename: function (req, file, cb) {
+    const uniqueName = Date.now() + '-' + file.originalname;
+    cb(null, uniqueName);
+  },
 });
 
-const upload = multer({ storage : storage});
+const upload = multer({ storage });
 
 module.exports = upload;
