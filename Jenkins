@@ -1,0 +1,28 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Clone') {
+            steps {
+                git 'https://github.com/sambit-8490/MerrnStackApp-EmployeeList.git'
+            }
+        }
+        stage('Clean Target Directory') {
+            steps {
+                sh 'rm -rf /home/developer/Desktop/practice-27/jenkins/*'
+            }
+        }
+        stage('Copy Project') {
+            steps {
+                sh '''
+                    cp -r $WORKSPACE/* /home/developer/Desktop/practice-27/jenkins
+                '''
+            }
+        }
+        stage('deploy') {
+            steps {
+              sh 'cd /home/developer/Desktop/practice-27/jenkins && docker-compose up -d'
+            }
+        }
+    }
+}
