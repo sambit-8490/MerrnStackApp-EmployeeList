@@ -1,44 +1,36 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import logo from './logo.png';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import API from "../api/axios";
+import logo from "./logo.png";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate inputs
     if (!email || !password) {
-      setError('Both email and password are required.');
+      setError("Both email and password are required.");
       return;
     }
 
     try {
-      // Make an API call to the backend to login using Axios
-      const response = await axios.post('http://localhost:5000/api/users/login', {
+      const response = await API.post("/api/users/login", {
         email,
-        password
+        password,
       });
 
-      console.log(response.data);
-      // If login is successful, store the JWT token
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('email', response.data.email);
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("email", response.data.email);
 
-      // Redirect to home page after successful login
-      navigate('/home');
-    } catch (error) {
-      if (error.response && error.response.data) {
-        // Handle specific error response from server
-        setError(error.response.data.message || 'Invalid credentials.');
-      } else {
-        setError('An error occurred during login.');
-      }
+      navigate("/home");
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Invalid email or password"
+      );
     }
   };
 
@@ -50,40 +42,51 @@ const Login = () => {
           DealsDray
         </div>
       </div>
-      <form onSubmit={handleSubmit} className="md:w-[400px] w-[80%] shadow-lg shadow-red-300 rounded-lg p-[20px] space-y-6">
+
+      <form
+        onSubmit={handleSubmit}
+        className="md:w-[400px] w-[80%] shadow-lg shadow-red-300 rounded-lg p-[20px] space-y-6"
+      >
         <h1 className="font-bold md:text-3xl text-2xl mb-[30px]">Login</h1>
+
         {error && <p className="text-red-500">{error}</p>}
 
         {/* Email */}
         <div>
-          <label htmlFor="email" className="block font-semibold text-sm mb-2">Email</label>
+          <label className="block font-semibold text-sm mb-2">Email</label>
           <input
             type="email"
-            id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="youremail@example.com"
-            className="w-[100%] border border-gray-500 p-2 rounded-md"
+            className="w-full border border-gray-500 p-2 rounded-md"
             required
           />
         </div>
 
         {/* Password */}
         <div>
-          <label htmlFor="password" className="block font-semibold text-sm mb-2">Password</label>
+          <label className="block font-semibold text-sm mb-2">Password</label>
           <input
             type="password"
-            id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-[100%] border border-gray-500 p-2 rounded-md"
+            className="w-full border border-gray-500 p-2 rounded-md"
             required
           />
         </div>
 
-        <button className="w-[100%] bg-red-600 p-2 rounded-md text-white">Login</button>
-        <p className="text-sm text-gray-500">Don't have an account? <a href="/register" className="text-black font-semibold">Register here</a></p>
+        <button className="w-full bg-red-600 p-2 rounded-md text-white">
+          Login
+        </button>
+
+        <p className="text-sm text-gray-500">
+          Don't have an account?{" "}
+          <a href="/register" className="text-black font-semibold">
+            Register here
+          </a>
+        </p>
       </form>
     </div>
   );
