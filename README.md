@@ -1,69 +1,262 @@
-# MERN stack application
+# Kubernetes Deployment — MERN Stack (DealsDray)
 
-MERN (MongoDB, Express, React, Node) stack application with an Employee Management system:
-1. Frontend (React.js)
-The frontend is built with React.js, where users interact with the application through forms, buttons, and tables. Using components like Login, Register, Home, EmployeeList, CreateEmployee, and EditEmployee. The UI also includes search, filter, sort, and pagination functionalities.
-Step-by-Step Principles:
-1.	Routing:
-   I’ve set up the React Router to handle page navigation using routes like /login, /register, /home, /employee-list, /create-employee, and /edit-employee.
-o	Each route renders a respective component, with the Nav component visible on all pages except login and registration.
-2.	Login and Register Pages:
-o	The user enters login or registration information.
-o	Axios is used to send API requests to the backend for authentication.
-o	Validation and error handling are performed, and users are navigated to the Home page upon success.
-3.	Employee List Page:
-o	Displays a list of employees.
-o	Search, filter, and sort features are implemented to enhance the user experience.
-o	Pagination allows users to navigate through employee records page by page. Conditional rendering ensures that disabled buttons are styled differently (e.g., grey when disabled).
-o	When deleting an employee, the success message shows for 2 seconds and then disappears automatically using setTimeout.
-4.	Create and Edit Employee Pages:
-o	Users can fill in forms to create or edit an employee record.
-o	Form data (like name, email, mobile, designation, gender, and courses) is sent to the backend.
-o	Employee details such as Date of Joining (DoJ) are formatted to show only the date, excluding the time part.
-5.	Search, Filter, and Sort:
-o	A search bar allows users to type queries and filter employee records based on name, email, or designation.
-o	Sorting options enable sorting by fields like date of joining (DoJ) or name.
-o	Search results update in real-time.
-2. Backend (Node.js + Express)
-The backend uses Node.js and Express to handle API requests from the frontend. It communicates with the MongoDB database to store, retrieve, and manipulate employee data.
-Step-by-Step Principles:
-1.	API Routes:
-o	This have have various routes (e.g., POST /login, POST /register, GET /employees, POST /employee, PUT /employee/:id, and DELETE /employee/:id).
-o	These routes handle CRUD (Create, Read, Update, Delete) operations for employees.
-o	Middleware handles tasks like validation, authentication, and error handling.
-2.	Employee Model:
-o	I have defined an Employee Schema using Mongoose.
-o	Key fields include name, email, mobile, designation, gender, course (array of courses), image (as a Buffer), and doj (Date of Joining).
-o	An empid field will act as a primary key and can be auto-incremented using mongoose-sequence or another method.
-3.	Handling Images:
-o	The employee image is stored as a binary Buffer in MongoDB. This allows you to handle employee profile pictures or similar images.
-4.	Date Formatting:
-o	When displaying employee records, the DoJ (Date of Joining) is formatted to show only the date (without time) using JavaScript's .toLocaleDateString().
-5.	Security:
-o	Authentication logic ensures that only authenticated users can access certain routes (e.g., the employee list).
-o	JWT (JSON Web Tokens) or similar mechanisms can be used for secure user sessions.
-3. Database (MongoDB)
-   I used MongoDB to store employee data. Mongoose serves as an ODM (Object Data Modeling) library, allowing you to interact with MongoDB in a structured way.
-Step-by-Step Principles:
-1.	Employee Collection:
-o	The employee data is stored in a collection, with each employee having fields such as name, email, mobile, designation, etc.
-2.	CRUD Operations:
-o	Create: A new employee is added to the database when the form is submitted on the CreateEmployee page.
-o	Read: The EmployeeList page retrieves employee data and displays it.
-o	Update: Employees can be edited, and changes are saved to the database using the PUT request.
-o	Delete: Employees can be deleted, and the frontend UI updates accordingly.
-3.	Auto-Increment Field (empid):
-o	While MongoDB’s _id field can uniquely identify records, you want an empid field that auto-increments. You can implement this without using mongoose-sequence by manually managing counters in the database, but using libraries is recommended for simplicity.
-4. Pagination Logic
-   I’ve implemented pagination to split employee data across multiple pages:
-•	Previous and Next buttons navigate through pages.
-•	The buttons are conditionally disabled (e.g., on the first or last page) and styled accordingly.
-6. Success Message Timeout
-When an employee is deleted, a success message is displayed for 2 seconds before it disappears. This is achieved using setTimeout:
+A step-by-step guide to deploy Frontend, Backend, and MongoDB on Minikube.
 
-Conclusion:
-•	Frontend handles UI, form submissions, validation, and pagination.
-•	Backend handles API requests, database operations, and business logic.
-•	MongoDB stores employee data, including auto-incrementing IDs and images.
-•	Security is managed with proper authentication and token management.
-This step-by-step breakdown illustrates how each layer of your MERN stack application interacts and functions.
+---
+
+## Project Structure
+
+```
+MerrnStackApp-EmployeeList/
+├── k8s.yaml          ← All Kubernetes manifests
+├── Dockerfile        ← Frontend Dockerfile
+├── backend/
+│   └── Dockerfile    ← Backend Dockerfile
+└── src/
+    └── axios.js      ← API base URL config
+```
+
+---
+
+## Prerequisites
+
+Make sure these are installed:
+
+| Tool | Check Command |
+|------|--------------|
+| Docker | `docker --version` |
+| Minikube | `minikube version` |
+| kubectl | `kubectl version --client` |
+
+---
+
+## One-Time Setup
+
+### 1. Start Minikube
+
+```bash
+minikube start
+```
+
+### 2. Get Minikube IP (save this!)
+
+```bash
+minikube ip
+# Example output: 192.168.49.2
+```
+
+
+```
+
+> ⚠️ Vite bakes env vars at build time — hardcode the IP here directly.
+
+---
+
+## Deploy Steps (Every Time)
+
+### Step 1 — Build Docker Images
+
+```bash
+# Build frontend (from root folder)
+docker build -t merrnstackapp:frontend .
+
+# Build backend
+docker build -t merrnstackapp:backend ./backend
+```
+
+### Step 2 — Load Images into Minikube
+
+```bash
+minikube image load merrnstackapp:frontend
+minikube image load merrnstackapp:backend
+```
+
+### Step 3 — Apply Kubernetes Manifests
+
+```bash
+kubectl apply -f k8s.yaml
+```
+
+### Step 4 — Check All Pods Running
+
+```bash
+kubectl get pods
+```
+
+Expected output:
+```
+NAME                        READY   STATUS    RESTARTS   AGE
+mongo-xxxx                  1/1     Running   0          1m
+backend-xxxx                1/1     Running   0          1m
+frontend-xxxx               1/1     Running   0          1m
+```
+
+> If STATUS shows `CrashLoopBackOff` or `Error` — see Troubleshooting below.
+
+### Step 5 — Open in Browser
+
+| App | URL |
+|-----|-----|
+| Frontend | http://192.168.49.2:30004 |
+| Backend API | http://192.168.49.2:30002 |
+
+---
+
+## Test Backend API (Register User)
+
+```bash
+curl -X POST http://192.168.49.2:30002/api/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Test User",
+    "email": "test@gmail.com",
+    "password": "123456"
+  }'
+```
+
+---
+
+## Check Data in MongoDB
+
+```bash
+# Go inside mongo pod
+kubectl exec -it $(kubectl get pod -l app=mongo -o jsonpath='{.items[0].metadata.name}') -- mongosh
+
+# Inside mongosh shell
+use dealsdray
+db.employees.find().pretty()
+```
+
+---
+
+## Useful Commands
+
+### Check Status
+
+```bash
+kubectl get pods          # Pod status
+kubectl get svc           # Services and ports
+kubectl get all           # Everything
+```
+
+### View Logs
+
+```bash
+kubectl logs -l app=frontend    # Frontend logs
+kubectl logs -l app=backend     # Backend logs
+kubectl logs -l app=mongo       # MongoDB logs
+
+# Follow live logs
+kubectl logs -l app=backend -f
+```
+
+### Check Images in Minikube
+
+```bash
+minikube image ls | grep merrnstackapp
+```
+
+### Restart a Deployment
+
+```bash
+kubectl rollout restart deployment/frontend
+kubectl rollout restart deployment/backend
+kubectl rollout restart deployment/mongo
+```
+
+### Delete Everything and Redeploy
+
+```bash
+kubectl delete -f k8s.yaml
+kubectl apply -f k8s.yaml
+```
+
+---
+
+## Rebuild and Redeploy (After Code Changes)
+
+```bash
+# 1. Rebuild image
+docker build -t merrnstackapp:frontend .
+
+# 2. Reload into Minikube
+minikube image load merrnstackapp:frontend
+
+# 3. Restart pod
+kubectl rollout restart deployment/frontend
+
+# 4. Watch pod restart
+kubectl get pods -w
+```
+
+---
+
+## Troubleshooting
+
+### Pod showing `ImagePullBackOff`
+
+```bash
+# Images not loaded into Minikube
+minikube image load merrnstackapp:frontend
+minikube image load merrnstackapp:backend
+```
+
+### Pod showing `CrashLoopBackOff`
+
+```bash
+# Check logs for error
+kubectl logs -l app=backend
+kubectl describe pod -l app=backend
+```
+
+### Registration Failed on Frontend
+
+```bash
+# 1. Check axios.js has correct Minikube IP
+cat src/axios.js
+
+# 2. Test backend directly
+curl http://192.168.49.2:30002/
+
+# 3. Check backend logs
+kubectl logs -l app=backend
+```
+
+### Frontend not opening in browser
+
+```bash
+# Use port-forward as alternative
+kubectl port-forward service/frontend 5173:5173
+
+# Then open: http://localhost:5173
+```
+
+### MongoDB not connecting
+
+```bash
+# Check MONGODB_URI in k8s.yaml backend env
+# Must be: mongodb://mongo:27017/dealsdray
+kubectl logs -l app=backend | grep -i mongo
+```
+
+---
+
+## Port Reference
+
+| Service | Internal Port | External NodePort |
+|---------|--------------|-------------------|
+| Frontend | 5173 | 30004 |
+| Backend | 5000 | 30002 |
+| MongoDB | 27017 | none (internal only) |
+
+---
+
+## Stop Everything
+
+```bash
+# Stop all deployments
+kubectl delete -f k8s.yaml
+
+# Stop Minikube
+minikube stop
+```
